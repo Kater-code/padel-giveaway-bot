@@ -6,10 +6,10 @@ from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 
 from aiogram import Bot, Dispatcher, F
-from aiogram.filters import Command, CommandStart
+from aiogram.filters import Command, CommandObject, CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
-from aiogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, Message
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message
 
 import db
 
@@ -33,8 +33,13 @@ class NewGiveaway(StatesGroup):
 # ---------- admin: create ----------
 
 @dp.message(CommandStart(), F.chat.type == "private")
-async def start(m: Message):
-    await m.answer("Привет! Нажми «Участвовать» под постом розыгрыша, потом пришли сюда скрин подписки.")
+async def start(m: Message, command: CommandObject):
+    if command.args and command.args.startswith("join_"):
+        gid = int(command.args.removeprefix("join_"))
+        db.add_participant(gid, m.from_user.id, m.from_user.username or m.from_user.full_name)
+        await m.answer("Ты в игре! 🎾 Теперь пришли сюда скрин подписки на группу в Pado — без него участие не засчитывается.")
+    else:
+        await m.answer("Привет! Нажми «Участвовать» под постом розыгрыша, потом пришли сюда скрин подписки.")
 
 
 @dp.message(Command("new"), is_admin, F.chat.type == "private")
@@ -67,8 +72,8 @@ async def new_draw_at(m: Message, state: FSMContext):
     data = await state.get_data()
     await state.clear()
     gid = db.create_giveaway(GROUP_ID, data["text"], data["prize"], draw_at)
-    kb = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="🎾 Участвовать", callback_data=f"join:{gid}")]])
     me = (await bot.me()).username
+    kb = join_keyboard(me, gid)
     text = f"{data['text']}\n\n⏰ Итоги: {m.text.strip()} (Киев)\n📸 После кнопки пришли скрин подписки боту @{me} в личку"
     post = await bot.send_message(GROUP_ID, text, reply_markup=kb)
     db.set_message_id(gid, post.message_id)
@@ -77,12 +82,9 @@ async def new_draw_at(m: Message, state: FSMContext):
 
 # ---------- participants ----------
 
-@dp.callback_query(F.data.startswith("join:"))
-async def join(cq: CallbackQuery):
-    gid = int(cq.data.split(":")[1])
-    db.add_participant(gid, cq.from_user.id, cq.from_user.username or cq.from_user.full_name)
-    me = (await bot.me()).username
-    await cq.answer(f"Ты в игре! Теперь пришли скрин подписки боту @{me} в личку.", show_alert=True)
+def join_keyboard(bot_username: str, gid: int) -> InlineKeyboardMarkup:
+    url = f"https://t.me/{bot_username}?start=join_{gid}"
+    return InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="🎾 Участвовать", url=url)]])
 
 
 @dp.message(F.photo, F.chat.type == "private")
