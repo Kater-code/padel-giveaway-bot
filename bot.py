@@ -16,7 +16,7 @@ import db
 BOT_TOKEN = os.environ["BOT_TOKEN"]
 ADMIN_ID = int(os.environ["ADMIN_ID"])
 GROUP_ID = int(os.environ["GROUP_ID"])
-TZ = ZoneInfo(os.environ.get("TZ", "Asia/Manila"))
+TZ = ZoneInfo(os.environ.get("TZ", "Europe/Kyiv"))
 DATE_FMT = "%d.%m.%Y %H:%M"
 
 bot = Bot(BOT_TOKEN)
