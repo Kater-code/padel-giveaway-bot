@@ -68,7 +68,9 @@ async def new_draw_at(m: Message, state: FSMContext):
     await state.clear()
     gid = db.create_giveaway(GROUP_ID, data["text"], data["prize"], draw_at)
     kb = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="🎾 Участвовать", callback_data=f"join:{gid}")]])
-    post = await bot.send_message(GROUP_ID, data["text"], reply_markup=kb)
+    me = (await bot.me()).username
+    text = f"{data['text']}\n\n⏰ Итоги: {m.text.strip()} (Киев)\n📸 После кнопки пришли скрин подписки боту @{me} в личку"
+    post = await bot.send_message(GROUP_ID, text, reply_markup=kb)
     db.set_message_id(gid, post.message_id)
     await m.answer(f"Опубликовано. Розыгрыш #{gid}, итоги {m.text.strip()}.")
 
