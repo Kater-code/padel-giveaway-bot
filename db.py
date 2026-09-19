@@ -188,3 +188,19 @@ def redraw(giveaway_id: int) -> dict | None:
         ).fetchone()
     current_winner_id = row["winner_id"] if row else None
     return _choose_winner(giveaway_id, current_winner_id)
+
+
+def get_giveaway(giveaway_id: int) -> dict | None:
+    with _connect() as connection:
+        row = connection.execute(
+            "SELECT * FROM giveaways WHERE id = ?", (giveaway_id,)
+        ).fetchone()
+        return dict(row) if row else None
+
+
+def latest_giveaway() -> dict | None:
+    with _connect() as connection:
+        row = connection.execute(
+            "SELECT * FROM giveaways ORDER BY id DESC LIMIT 1"
+        ).fetchone()
+        return dict(row) if row else None
