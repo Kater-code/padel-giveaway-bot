@@ -37,9 +37,9 @@ async def start(m: Message, command: CommandObject):
     if command.args and command.args.startswith("join_"):
         gid = int(command.args.removeprefix("join_"))
         db.add_participant(gid, m.from_user.id, m.from_user.username or m.from_user.full_name)
-        await m.answer("Ты в игре! 🎾 Теперь пришли сюда скрин подписки на группу в Pado — без него участие не засчитывается.")
+        await m.answer("Ты в игре! 🎾 Теперь пришли сюда скрин профиля в Pado — без него участие не засчитывается.")
     else:
-        await m.answer("Привет! Нажми «Участвовать» под постом розыгрыша, потом пришли сюда скрин подписки.")
+        await m.answer("Привет! Нажми «Участвовать» под постом розыгрыша, потом пришли сюда скрин профиля в Pado.")
 
 
 @dp.message(Command("new"), is_admin, F.chat.type == "private")
@@ -74,7 +74,7 @@ async def new_draw_at(m: Message, state: FSMContext):
     gid = db.create_giveaway(GROUP_ID, data["text"], data["prize"], draw_at)
     me = (await bot.me()).username
     kb = join_keyboard(me, gid)
-    text = f"{data['text']}\n\n⏰ Итоги: {m.text.strip()} (Киев)\n📸 После кнопки пришли скрин подписки боту @{me} в личку"
+    text = f"{data['text']}\n\n⏰ Итоги: {m.text.strip()} (Киев)\n📸 После кнопки пришли боту @{me} в личку скрин профиля в Pado"
     post = await bot.send_message(GROUP_ID, text, reply_markup=kb)
     db.set_message_id(gid, post.message_id)
     await m.answer(f"Опубликовано. Розыгрыш #{gid}, итоги {m.text.strip()}.")
